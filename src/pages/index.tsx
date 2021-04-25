@@ -1,22 +1,94 @@
-import { Header } from '../components/Header'
-import styles from '../styles/Home.module.css'
+import { GetStaticProps } from 'next'
+import { api } from '../services/api'
+import { format, parseISO} from 'date-fns'
+import ptBR from 'date-fns/locale/pt-BR'
+import { convertDurationToTimeString } from '../utils/convertDurationToTimeString'
+import Image from 'next/image'
 
-export default function Home(props) {
+import styles from './home.module.scss'
+
+type Episode = {
+    id: string,
+    title: string,
+    thumbnail: string,
+    description: string,
+    members: string,
+    publishedAt: string,
+    duration: number,
+    durationAsString: string,
+    url: string,
+}
+
+type HomeProps = {
+  allEpisodes: Episode[],
+  lastestEpisodes: Episode[],
+}
+ 
+export default function Home({allEpisodes, lastestEpisodes}: HomeProps) {
   return (
-   <div>
-      <h1>Index</h1>
-      <p>{JSON.stringify(props.episodes)}</p>
+   <div className={styles.homepage}>
+
+      <section className={styles.lastestEpisodes}>
+        <h2>Ultimos Lançamentos</h2>
+
+        <ul>
+          {lastestEpisodes.map(episode => {
+            return (
+              <li key={episode.id}>
+                <Image width={192} height={192} src={episode.thumbnail} alt={episode.title} objectFit="cover"/>
+
+                <div className={styles.episodeDetails}>
+                  <a href="">{episode.title}</a>
+                  <p>{episode.members}</p>
+                  <span>{episode.publishedAt}</span>
+                  <span>{episode.durationAsString}</span>
+                </div>
+                <button type="button">
+                  <img src="/play-green.svg" alt="play"/>
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      </section>
+      <section className={styles.allEpisodes}>
+        <h2>Todos os Episodios</h2>
+      </section>
    </div>
   )
 }
 
-export async function getStaticProps() {
-  const response = await fetch('http://localhost:3333/episodes')
-  const data = await response.json()
+export const getStaticProps: GetStaticProps = async () => {
+  const { data } = await api.get('episodes', {
+    params: {
+      _limit: 12,
+      _sort: 'published_at',
+      _order: 'desc'
+    }
+  })
+
+
+  const episodes = data.map(episode => {
+    return {
+      id: episode.id,
+      title: episode.title,
+      thumbnail: episode.thumbnail,
+      members: episode.members,
+      publishedAt: format(parseISO(episode.published_at), 'd MMM y', { locale: ptBR }),
+      duration: Number(episode.file.duration),
+      durationAsString: convertDurationToTimeString(Number(episode.file.duration)),
+      description: episode.description,
+      url: episode.file.url,
+    }
+  })
+
+  const lastestEpisodes = episodes.slice(0, 2)
+  const allEpisodes = episodes.slice(2, episodes.lenght)
 
   return { 
     props: {
-      episodes: data,
+      lastestEpisodes,
+      allEpisodes
     },
     revalidate: 60 * 60 * 8
   }
