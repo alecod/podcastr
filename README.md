@@ -70,5 +70,4 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE.md) fi
 
 ---
 
-<p align="center">Projected by Rafael Menegon with 🖤</p>
-<p align="center">Readme inspired by Guilherme Capitão</p>
+<p align="center">Projected by Ale Junqueira with 🖤</p>
